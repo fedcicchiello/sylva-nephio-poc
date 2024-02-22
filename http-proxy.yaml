@@ -1,0 +1,13 @@
+env:
+  - name: http_proxy
+    value: "http://163.162.8.137:9966"
+  - name: https_proxy
+    value: "http://163.162.8.137:9966"
+  - name: no_proxy
+    value: "localhost,163.162.196.217,10.0.0.0/8,192.168.0.0/16,.cluster.local,.svc"
+  - name: HTTP_PROXY
+    value: "http://163.162.8.137:9966"
+  - name: HTTPS_PROXY
+    value: "http://163.162.8.137:9966"
+  - name: NO_PROXY
+    value: "localhost,163.162.196.217,10.0.0.0/8,192.168.0.0/16,.cluster.local,.svc"
