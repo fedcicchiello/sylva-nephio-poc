@@ -2,13 +2,18 @@
 
 set -ex
 
+DEMO_MODE="false" # DEMO_MODE is true if deploying Nephio into a sandbox, e.g. a VM, otherwise the target is a Sylva management cluster
 NEPHIO_DIR="./nephio-install"
 NEPHIO_KPT_PACKAGES="./nephio-kpt-packages.txt"
 export PROXY_CONF="http-proxy.yaml"
-STANDALONE_CLUSTER="false"
-ONLY_GET_PKGS="false"
+ONLY_GET_PKGS="false" # set ONLY_GET_PKGS to true if you just want to get kpt packages and render them locally without applying anything
 SYLVA_MGMT_VIP="163.162.114.133"
-export GITEA_URL="https://gitea.sylva"
+export GITEA_URL="http://${SYLVA_MGMT_VIP}:3000"
+export METALLB_SHARING_KEY="cluster-external-ip"
+
+if [[ "${DEMO_MODE}" == true ]]; then
+    NEPHIO_KPT_PACKAGES="./nephio-kpt-packages-demo.txt"
+fi
 
 install_kpt_package() {
     if [[ $# != 2 ]]; then
@@ -19,7 +24,7 @@ install_kpt_package() {
     PKG_NAME=$1
     PKG_URL=$2
 
-    kpt pkg get --for-deployment "${PKG_URL}"
+    kpt pkg get --for-deployment "${PKG_URL}" "{PKG_NAME}"
     kpt fn render "${PKG_NAME}"
     case "${PKG_NAME}" in
         "network-config")
@@ -39,7 +44,7 @@ install_kpt_package() {
             yq -i 'select(.kind == "Deployment" and .metadata.name == "porch-server").spec.template.spec.containers[0].env += load("../" + strenv(PROXY_CONF)).env' "${PKG_NAME}/3-porch-server.yaml"
             ;;
         "nephio-operator")
-            if [[ "${STANDALONE_CLUSTER}" != "true" ]]; then
+            if [[ "${DEMO_MODE}" != "true" ]]; then
                 yq -i '.metadata.labels = {"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/enforce-version": "latest"}' "${PKG_NAME}/namespace.yaml"
                 # configure gitea URL and credentials
                 for file in "${PKG_NAME}/app/controller/deployment-controller.yaml" "${PKG_NAME}/app/controller/deployment-token-controller.yaml"; do
@@ -48,12 +53,22 @@ install_kpt_package() {
                 done
             fi
             ;;
+        "mgmt"|"mgmt-staging")
+            if [[ "${DEMO_MODE}" != "true" ]]; then
+                yq -i '.spec.git.repo = strenv(GITEA_URL) + "/nephio/" + strenv(PKG_NAME) + ".git"' "${PKG_NAME}/repo-porch.yaml"
+            fi
+            ;;
         "webui")
             yq -i '.metadata.labels = {"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/enforce-version": "latest"}' "${PKG_NAME}/0-namespace.yaml"
-            if [[ "${STANDALONE_CLUSTER}" != "true" ]]; then
+            if [[ "${DEMO_MODE}" != "true" ]]; then
                 # customize webui Service
                 yq -i '.metadata.annotations["metallb.universe.tf/loadBalancerIPs"] = strenv(SYLVA_MGMT_VIP)' "${PKG_NAME}/service.yaml"
+                yq -i '.metadata.annotations["metallb.universe.tf/allow-shared-ip"] = strenv(METALLB_SHARING_KEY)' "${PKG_NAME}/service.yaml"
             fi
+            ;;
+        "gitea")
+            yq -i '.metadata.annotations["metallb.universe.tf/loadBalancerIPs"] = strenv(SYLVA_MGMT_VIP)' "${PKG_NAME}/service-gitea.yaml"
+            yq -i '.metadata.annotations["metallb.universe.tf/allow-shared-ip"] = strenv(METALLB_SHARING_KEY)' "${PKG_NAME}/service-gitea.yaml"
             ;;
     esac
     if [[ ${ONLY_GET_PKGS} != "true" ]]; then
@@ -66,7 +81,7 @@ if [ ! -d "${NEPHIO_DIR}" ]; then
     mkdir "${NEPHIO_DIR}"
 fi
 
-if [[ ${STANDALONE_CLUSTER} == "true" ]]; then
+if [[ ${DEMO_MODE} == "true" ]]; then
     ./create-kind-cluster.sh
 fi
 

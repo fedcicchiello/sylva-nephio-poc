@@ -12,3 +12,6 @@ cluster-capi https://github.com/nephio-project/catalog.git/infra/capi/cluster-ca
 cluster-capi-infrastructure-docker https://github.com/nephio-project/catalog.git/infra/capi/cluster-capi-infrastructure-docker@v2.0.0
 cluster-capi-kind-docker-templates https://github.com/nephio-project/catalog.git/infra/capi/cluster-capi-kind-docker-templates@v2.0.0
 webui https://github.com/nephio-project/catalog.git/nephio/optional/webui@v2.0.0
+mgmt https://github.com/nephio-project/catalog.git/distros/sandbox/repository@v2.0.0
+mgmt-staging https://github.com/nephio-project/catalog.git/distros/sandbox/repository@v2.0.0
+network https://github.com/nephio-project/catalog.git/distros/sandbox/network@v2.0.0

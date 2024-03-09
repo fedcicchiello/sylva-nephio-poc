@@ -1,0 +1,31 @@
+apiVersion: unitsoperator.sylva/v1alpha1
+kind: SylvaUnitsRelease
+metadata:
+  name: example # kpt-set: ${clusterName}
+spec:
+  clusterType: workload
+  sylvaUnitsSource:
+    type: git
+    url: https://gitlab.com/sylva-projects/sylva-core.git # kpt-set: ${sylvaCoreUrl}
+    branch: main # kpt-set: ${sylvaCoreBranch}
+  interval: 30m
+  valuesFrom: []
+  values:
+    units:
+      # Disabling some units for lightweight deployment testing
+      monitoring:
+        enabled: false
+      kyverno:
+        enabled: false
+    cluster:
+      name: example # kpt-set: ${clusterName}
+      k8s_version: v1.27.3 # kpt-set: ${k8sVersion}
+      capi_providers:
+        infra_provider: capd
+        bootstrap_provider: cabpk # kpt-set: ${bootstrapProvider}
+      # CAPD only supports 1 CP machine
+      control_plane_replicas: 1
+    proxies:
+      http_proxy: "" # kpt-set: ${httpProxy}
+      https_proxy: "" # kpt-set: ${httpsProxy}
+      no_proxy: "" # kpt-set: ${noProxy}

@@ -57,3 +57,45 @@ echo 1 >  /proc/gtp5g/qos
 ```
 
 ### Step 2: Building the Sylva/Nephio management cluster
+
+#### Sylva workload cluster kpt package
+Sylva will be consumed by Nephio through a kpt package that will substitute the ones configuring CAPI-CAPD resources on the upstream docs.
+
+The idea is to develop a kpt package to manage a `SylvaUnitsRelease` composed of many layers of `valuesFrom` like the one shown below.
+
+Sylva CRDs example:
+```yaml
+apiVersion: 
+kind: SylvaUnitsRelease/SylvaUnitsReleaseTemplate
+metadata:
+    name: example
+    namespace: test
+spec:
+    clusterType: workload
+    sylvaUnitsSource:
+        type: git
+        url: https://gitlab.com/sylva-projects/sylva-core.git/charts/sylva-units
+        tag: 1.0.0
+    valuesFrom:
+        - layerName: networkAllocation
+          type: ConfigMap
+          name: workload-cluster-networking
+          valuesKey: values
+        - layerName: serverAllocation
+          type: Secret
+          name: workload-cluster-bmh
+          valuesKey: values
+        - layerName: flavor
+          type: ConfigMap
+          name: workload-cluster-flavor
+          valuesKey: values
+        - layerName: base
+          type: ConfigMap
+          name: workload-cluster-base
+          valuesKey: values
+    values:
+    interval: 30m
+    suspend: false
+```
+
+In order to properly fill dynamic configurations such as network allocation or servers allocations a bunch of functions will be provided to abstract the underlying complex resources from a simple set of user provided parameters.

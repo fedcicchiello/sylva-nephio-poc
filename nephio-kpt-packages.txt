@@ -1,3 +1,4 @@
+gitea https://github.com/nephio-project/catalog.git/distros/sandbox/gitea@v2.0.0
 network-config https://github.com/nephio-project/catalog.git/nephio/optional/network-config@v2.0.0
 resource-backend https://github.com/nephio-project/catalog.git/nephio/optional/resource-backend@v2.0.0
 porch https://github.com/nephio-project/catalog/nephio/core/porch@v2.0.0
@@ -5,3 +6,5 @@ nephio-operator https://github.com/nephio-project/catalog.git/nephio/core/nephio
 configsync https://github.com/nephio-project/catalog.git/nephio/core/configsync@v2.0.0
 stock-repos https://github.com/nephio-project/catalog.git/nephio/optional/stock-repos@v2.0.0
 webui https://github.com/nephio-project/catalog.git/nephio/optional/webui@v2.0.0
+mgmt https://github.com/nephio-project/catalog.git/distros/sandbox/repository@v2.0.0
+mgmt-staging https://github.com/nephio-project/catalog.git/distros/sandbox/repository@v2.0.0
