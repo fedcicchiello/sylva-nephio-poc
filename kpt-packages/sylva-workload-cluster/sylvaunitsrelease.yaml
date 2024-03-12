@@ -12,6 +12,12 @@ spec:
   valuesFrom: []
   values:
     units:
+      local-path-provisioner:
+        enabled: true
+      multus:
+        enabled: true
+      sriov:
+        enabled: true
       # Disabling some units for lightweight deployment testing
       monitoring:
         enabled: false
@@ -25,6 +31,10 @@ spec:
         bootstrap_provider: cabpk # kpt-set: ${bootstrapProvider}
       # CAPD only supports 1 CP machine
       control_plane_replicas: 1
+      cluster_services_cidrs:
+        - 10.128.0.0/12 # kpt-set: ${svcCIDR}
+      cluster_pods_cidrs:
+        - 192.168.0.0/16 # kpt-set: ${podCIDR}
     proxies:
       http_proxy: "" # kpt-set: ${httpProxy}
       https_proxy: "" # kpt-set: ${httpsProxy}

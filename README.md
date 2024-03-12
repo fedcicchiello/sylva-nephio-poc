@@ -99,3 +99,7 @@ spec:
 ```
 
 In order to properly fill dynamic configurations such as network allocation or servers allocations a bunch of functions will be provided to abstract the underlying complex resources from a simple set of user provided parameters.
+
+# Values for testing the sylva kpt package
+`capd_no_proxy="tim.local,sylva,127.0.0.1,localhost,cattle-system.svc,192.168.0.0/16,10.0.0.0/8,163.162.0.0/16,tim.it,telecomitalia.it,cluster.local,local.,svc,163.162.196.17,100.64.0.0/10,172.18.0.0/16`
+`kpt fn eval -i gcr.io/kpt-fn/apply-setters:v0.1.1 -- clusterName=regional httpProxy=${http_proxy} httpsProxy=${https_proxy} noProxy=${capd_no_proxy} sylvaCoreBranch="fc/fix-capd"`

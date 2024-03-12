@@ -1,2 +1,5 @@
 nephio-install/
 management-cluster-kubeconfig
+regional/
+edge01/
+edge02/

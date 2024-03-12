@@ -1,7 +1,7 @@
 env:
   - name: HTTP_PROXY
-    value: "http://163.162.8.137:9966"
+    value: "http://163.162.95.56:3128"
   - name: HTTPS_PROXY
-    value: "http://163.162.8.137:9966"
+    value: "http://163.162.95.56:3128"
   - name: NO_PROXY
-    value: "localhost,163.162.114.133,163.162.196.217,10.0.0.0/8,192.168.0.0/16,.cluster.local,.svc,.sylva,gitea.sylva,local.,172.18.0.0/16,100.64.0.0/10"
+    value: "localhost,127.0.0.1,10.0.0.0/8,192.168.0.0/16,172.18.0.0/16,100.64.0.0/10,.cluster.local,.svc,.sylva,gitea.sylva,local.,function-runner"
