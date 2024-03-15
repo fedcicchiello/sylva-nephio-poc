@@ -5,17 +5,13 @@ set -ex
 export HTTP_PROXY="http://163.162.95.56:3128"
 export HTTPS_PROXY="http://163.162.95.56:3128"
 export NO_PROXY="tim.local,sylva,127.0.0.1,localhost,cattle-system.svc,192.168.0.0/16,10.0.0.0/8,163.162.0.0/16,tim.it,telecomitalia.it,cluster.local,local.,svc,163.162.196.17,100.64.0.0/10,172.18.0.0/16"
-export PROXY_CONF="http-proxy.yaml"
-export GITEA_URL="http://172.18.0.100:3000"
-export ACCESSIBLE_GITEA_URL="http://163.162.196.17:3000"
-CURRENT_DIR="$(realpath $(dirname $0))"
 export SYLVA_CORE_BRANCH="fc/fix-capd"
 
 SYLVA_WKLD_CLUSTER_PKG="https://github.com/fedcicchiello/sylva-kpt-packages.git/sylva-workload-cluster@v0.0.2"
 
 export KUBECONFIG="$HOME/.kube/management.yaml"
 
-for CLUSTER in edge01 edge02; do
+for CLUSTER in regional edge01 edge02; do
     export SITE_TYPE=""
     case "${CLUSTER}" in
       regional)
@@ -48,4 +44,5 @@ for CLUSTER in edge01 edge02; do
     clusterctl get kubeconfig "${CLUSTER}" -n "${CLUSTER}" > "$HOME/.kube/${CLUSTER}.yaml"
 done
 
+echo "Run the command below to setup your kubectl"
 echo "export KUBECONFIG=${HOME}/.kube/management.yaml:${HOME}/.kube/regional.yaml:${HOME}/.kube/edge01.yaml:${HOME}/.kube/edge02.yaml"

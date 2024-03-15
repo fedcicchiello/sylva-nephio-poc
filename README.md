@@ -1,9 +1,9 @@
 # Sylva Nephio interworking
-This repository contains all the development to demonstrate Sylva-Nephio interworking.
+This repository contains the scripts and the documentation of the PoC showing the Sylva-Nephio interworking.
 
 Sylva and Nephio management components are two distinct logical entities so they can in general be located in different clusters.
 
-For the demo purposes they will coexist on the same Kubernetes cluster created with Sylva on vSphere.
+For the PoC purposes they will coexist on the same Kubernetes cluster created with Sylva on Docker.
 
 It will be enriched by the installation and configuration of nephio operators.
 
@@ -13,107 +13,143 @@ Sylva CRDs will be used to provide the effective interface to the KaaS service r
 
 ## Projects versions
 - Sylva v1.0
-    - SylvaUnitsOperator commit 1cf45df7a39c1ab000e97ce01d6d290195d117d9
-    - WorkloadClusterOperator commit b253fe19c706c78b3fa26df79e414b267eaed093
+    - SylvaUnitsOperator commit b98ccdb15948114a9bcc5308bcc03576c829d52f
 - Nephio R2
 
-## Steps
-The first step is to install Nephio on a VM in order to practice with kpt.
+## Pre-requisites
+All the resources will be deployed on Docker, so everything runs on a single server/VM.
 
-The second step is to install Nephio management controllers and CRDs on the Sylva management cluster.
+If you opt for a VM ensure it has at leat 16 vCPUs and 32 GB of RAM.
 
-The third and last step is to [deploy the free5GC](https://github.com/nephio-project/docs/blob/v2.0.0/content/en/docs/guides/user-guides/exercise-1-free5gc.md) on workload clusters provided by Sylva with all the requirements satisfied.
+The suggested OS is ubuntu 22.04 with kernel version >= 5.4
 
-A forth optional step would be the deployment of the [OAI core](https://github.com/nephio-project/docs/blob/v2.0.0/content/en/docs/guides/user-guides/exercise-2-oai.md).
-
-### Step 1: Nephio demo
-
-#### Nephio (demo env based on docker) pre-requisites
-- OS: ubuntu 22.04 with kernel version >= 5.4
-- VM min specs: 16 vCPUs, 32 GB of RAM
+Ensure you have the following packages installed:
 - git
 - kind
 - docker
-- ca-certificates
 - kubectl
 - kpt
+- containerlab
+- yq
 
-#### Nephio demo env instructions
-Follow the [install-on-single-vm guide](https://github.com/nephio-project/docs/blob/v2.0.0/content/en/docs/guides/install-guides/install-on-single-vm.md) from Nephio.
 
-An overview of the components installed is available at [explore-sandbox](https://github.com/nephio-project/docs/blob/v2.0.0/content/en/docs/guides/install-guides/explore-sandbox.md).
-
-#### Customizations
-The only customization needed to have a working setup is the injection of http proxy configuration inside `porch` and `configsync` made by [install-nephio.sh](./install-nephio.sh).
-
-#### Workload cluster requirements
-[gtp5g](https://github.com/free5gc/gtp5g), installation instructions:
+In order to run the free5GC core you will need the [gtp5g](https://github.com/free5gc/gtp5g) module. You can install it with:
 ```bash
 git clone https://github.com/free5gc/gtp5g.git && cd gtp5g
 make clean && make
 make install
-# enable QoS
-echo 1 >  /proc/gtp5g/qos
 ```
 
-### Step 2: Building the Sylva/Nephio management cluster
+## Steps
+The step zero is the bootstrap of a Sylva v1 management cluster on Docker infrastructure.
 
-#### Sylva workload cluster kpt package
-Sylva will be consumed by Nephio through a kpt package that will substitute the ones configuring CAPI-CAPD resources on the upstream docs.
+The first step is the installation of the Nephio management controllers and CRDs on the Sylva management cluster.
 
-The idea is to develop a kpt package to manage a `SylvaUnitsRelease` composed of many layers of `valuesFrom` like the one shown below.
+The second step is the deployment through the Sylva Units Operator of three workload clusters on Docker: one will play the regional role, the other two the edge role.
 
-Sylva CRDs example:
-```yaml
-apiVersion: 
-kind: SylvaUnitsRelease/SylvaUnitsReleaseTemplate
-metadata:
-    name: example
-    namespace: test
-spec:
-    clusterType: workload
-    sylvaUnitsSource:
-        type: git
-        url: https://gitlab.com/sylva-projects/sylva-core.git/charts/sylva-units
-        tag: 1.0.0
-    valuesFrom:
-        - layerName: networkAllocation
-          type: ConfigMap
-          name: workload-cluster-networking
-          valuesKey: values
-        - layerName: serverAllocation
-          type: Secret
-          name: workload-cluster-bmh
-          valuesKey: values
-        - layerName: flavor
-          type: ConfigMap
-          name: workload-cluster-flavor
-          valuesKey: values
-        - layerName: base
-          type: ConfigMap
-          name: workload-cluster-base
-          valuesKey: values
-    values:
-    interval: 30m
-    suspend: false
+The third and last step is the [deployment of the free5GC](https://github.com/nephio-project/docs/blob/v2.0.0/content/en/docs/guides/user-guides/exercise-1-free5gc.md) on the workload clusters.
+
+## Step 0: bootstrapping the Sylva management cluster
+
+### Example values
+```bash
+---
+units:
+  # Disabling some units for lightweight deployment testing
+  cluster-creator-policy:
+    enabled: false
+  monitoring:
+    enabled: false
+  keycloak:
+    enabled: false
+  flux-webui:
+    enabled: false
+  capi-rancher-import:
+    enabled: false
+  kyverno:
+    enabled: false
+  shared-workload-clusters-settings:
+    enabled: false
+  harbor:
+    enabled: false
+  sylva-units-operator:
+    kustomization_spec:
+      images:
+        - name: controller
+          newName: fedcicchiello/sylva-units-operator
+          newTag: b98ccdb15948114a9bcc5308bcc03576c829d52f
+  workload-cluster-operator:
+    enabled: false
+  rancher-init:
+    enabled: false
+  rancher:
+    enabled: false
+  synchronize-secrets:
+    enabled: false
+  flux-webui:
+    enabled: false
+
+cluster:
+  k8s_version: v1.27.3
+  capi_providers:
+    infra_provider: capd
+    bootstrap_provider: cabpk
+
+  # CAPD only supports 1 CP machine
+  control_plane_replicas: 1
+
+  cluster_services_cidrs:
+    - 10.128.0.0/12
+  
+  cluster_pods_cidrs:
+    - 192.168.0.0/16
+
+capd_docker_host: unix:///var/run/docker.sock
+
+cluster_virtual_ip: 172.18.0.200
+
+proxies:
+  http_proxy: "your http_proxy"
+  https_proxy: "your https_proxy"
+  no_proxy: "your no_proxy"
+
+ntp:
+  enabled: false
 ```
 
-In order to properly fill dynamic configurations such as network allocation or servers allocations a bunch of functions will be provided to abstract the underlying complex resources from a simple set of user provided parameters.
+## Step 1: Nephio installation
+Ensure your kubeconfig is set to point to the Sylva management cluster, then configure `http-proxy.yaml` with your env configuration.
+Then install the Nephio management components with:
+```bash
+./install-nephio.sh
+```
 
-# Values for testing the sylva kpt package
-`capd_no_proxy="tim.local,sylva,127.0.0.1,localhost,cattle-system.svc,192.168.0.0/16,10.0.0.0/8,163.162.0.0/16,tim.it,telecomitalia.it,cluster.local,local.,svc,163.162.196.17,100.64.0.0/10,172.18.0.0/16`
-`kpt fn eval -i gcr.io/kpt-fn/apply-setters:v0.1.1 -- clusterName=regional httpProxy=${http_proxy} httpsProxy=${https_proxy} noProxy=${capd_no_proxy} sylvaCoreBranch="fc/fix-capd"`
+## Step 2: Workload clusters deployment
+Make sure to have the management cluster kubeconfig at the path `$HOME/.kube/management.yaml`.
+Ensure to configure your proxy configuration in `deploy-workload-clusters.sh`.
+Then deploy the three workload clusters (a regional and two edge sites) with:
+```bash
+./deploy-workload-clusters.sh
+```
 
-# Note
-Take a look at injectors inside the nephio-workload-cluster package.
-The PackageVariants with injectors are:
-- pv-cluster.yaml
-- pv-repo.yaml
-- pv-rootsync.yaml
-- pv-vlanindex.yaml
+You will find the kubeconfigs of the clusters in `$HOME/.kube/<cluster name>.yaml`
 
-# Workarounds
-Metallb in L2 mode doesn't work with calico, the workaround is:
+The script will use the [sylva-workload-cluster](https://github.com/fedcicchiello/sylva-kpt-packages/tree/main/sylva-workload-cluster) to configure the `SylvaUnitsRelease` CRD through kpt along with some resources needed for the workload management with Nephio such as a git repository per cluster on gitea, the deployment of configsync, the installation of some CRDs required by Nephio and the configuration of rootsync that will allow each cluster to apply manifests from their repository.
+
+### Sylva workload cluster kpt package
+Sylva will be consumed by Nephio through the sylva-workload-cluster kpt package instead of the [nephio-workload-cluster](https://github.com/nephio-project/catalog/tree/main/infra/capi/nephio-workload-cluster) proposed in the Nephio user guide.
+
+## Step 3: Free5GC deployment
+Simply run 
+```bash
+./deploy-free5gc.sh
+```
+And enjoy the free5Gc deployment!
+
+# Workaround
+If you use CAPD with calico as CNI, you can't use Metallb in L2 mode since the broadcast traffic doesn't reach the pods
+
+To work around that you can run a container on the kind network with the same IP as the `cluster_virtual_ip` and `kubectl port-forward` the gitea Service:
 ```bash
 docker run -d --rm --network kind --ip 172.18.0.200 --name kubectl -v /home/tilab/.kube/proxy.yaml:/.kube/config bitnami/kubectl:latest port-forward svc/gitea -n gitea 3000:3000 --address 172.18.0.200
 ```

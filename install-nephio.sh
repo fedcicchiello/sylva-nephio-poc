@@ -2,7 +2,6 @@
 
 set -ex
 
-DEMO_MODE="false" # DEMO_MODE is true if deploying Nephio into a sandbox, e.g. a VM, otherwise the target is a Sylva management cluster
 NEPHIO_DIR="./nephio-install"
 NEPHIO_KPT_PACKAGES="./nephio-kpt-packages.txt"
 export PROXY_CONF="http-proxy.yaml"
@@ -46,28 +45,21 @@ install_kpt_package() {
             yq -i 'select(.kind == "Deployment" and .metadata.name == "function-runner").spec.template.spec.containers[0].env += load("../" + strenv(PROXY_CONF)).env' "${PKG_NAME}/2-function-runner.yaml"
             ;;
         "nephio-operator")
-            if [[ "${DEMO_MODE}" != "true" ]]; then
-                yq -i '.metadata.labels = {"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/enforce-version": "latest"}' "${PKG_NAME}/namespace.yaml"
-                # configure gitea URL and credentials
-                for file in "${PKG_NAME}/app/controller/deployment-controller.yaml" "${PKG_NAME}/app/controller/deployment-token-controller.yaml"; do
-                    yq -i '(.spec.template.spec.containers[1].env[] | select(.name == "GIT_URL").value) = strenv(GITEA_URL)' "${file}"
-                    #yq -i '.spec.template.spec.containers[1].env += {"name": "GIT_SECRET_NAME", "value": "gitea-admin"}' "${file}"
-                done
-            fi
+            yq -i '.metadata.labels = {"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/enforce-version": "latest"}' "${PKG_NAME}/namespace.yaml"
+            # configure gitea URL and credentials
+            for file in "${PKG_NAME}/app/controller/deployment-controller.yaml" "${PKG_NAME}/app/controller/deployment-token-controller.yaml"; do
+                yq -i '(.spec.template.spec.containers[1].env[] | select(.name == "GIT_URL").value) = strenv(GITEA_URL)' "${file}"
+                #yq -i '.spec.template.spec.containers[1].env += {"name": "GIT_SECRET_NAME", "value": "gitea-admin"}' "${file}"
+            done
             ;;
         "mgmt"|"mgmt-staging")
-            if [[ "${DEMO_MODE}" != "true" ]]; then
-                PKG_NAME="${PKG_NAME}" yq -i '.spec.git.repo = strenv(GITEA_URL) + "/nephio/" + strenv(PKG_NAME) + ".git"' "${PKG_NAME}/repo-porch.yaml"
-            fi
-            # TODO add rootsync to mgmt
+            PKG_NAME="${PKG_NAME}" yq -i '.spec.git.repo = strenv(GITEA_URL) + "/nephio/" + strenv(PKG_NAME) + ".git"' "${PKG_NAME}/repo-porch.yaml"
             ;;
         "webui")
             yq -i '.metadata.labels = {"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/enforce-version": "latest"}' "${PKG_NAME}/0-namespace.yaml"
-            if [[ "${DEMO_MODE}" != "true" ]]; then
-                # customize webui Service
-                yq -i '.metadata.annotations["metallb.universe.tf/loadBalancerIPs"] = strenv(SYLVA_MGMT_VIP)' "${PKG_NAME}/service.yaml"
-                yq -i '.metadata.annotations["metallb.universe.tf/allow-shared-ip"] = strenv(METALLB_SHARING_KEY)' "${PKG_NAME}/service.yaml"
-            fi
+            # customize webui Service
+            yq -i '.metadata.annotations["metallb.universe.tf/loadBalancerIPs"] = strenv(SYLVA_MGMT_VIP)' "${PKG_NAME}/service.yaml"
+            yq -i '.metadata.annotations["metallb.universe.tf/allow-shared-ip"] = strenv(METALLB_SHARING_KEY)' "${PKG_NAME}/service.yaml"
             ;;
         "gitea")
             yq -i '.metadata.annotations["metallb.universe.tf/loadBalancerIPs"] = strenv(SYLVA_MGMT_VIP)' "${PKG_NAME}/service-gitea.yaml"
