@@ -3,3 +3,7 @@ management-cluster-kubeconfig
 regional/
 edge01/
 edge02/
+vars.json
+clab-5g/
+temp.json
+.clab-topo.gotmpl.bak

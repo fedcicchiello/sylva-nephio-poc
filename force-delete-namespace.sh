@@ -8,5 +8,5 @@ fi
 NAMESPACE=$1
 
 kubectl proxy &
-kubectl get ns "${NAMESPACE}" | jq '.spec = {"finalizers": []}' > temp.json
+kubectl get ns "${NAMESPACE}" -ojson | jq '.spec = {"finalizers": []}' > temp.json
 curl -k -H "Content-Type: application/json" -X PUT --data-binary @temp.json "127.0.0.1:8001/api/v1/namespaces/${NAMESPACE}/finalize"

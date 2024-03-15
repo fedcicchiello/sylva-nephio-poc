@@ -103,3 +103,17 @@ In order to properly fill dynamic configurations such as network allocation or s
 # Values for testing the sylva kpt package
 `capd_no_proxy="tim.local,sylva,127.0.0.1,localhost,cattle-system.svc,192.168.0.0/16,10.0.0.0/8,163.162.0.0/16,tim.it,telecomitalia.it,cluster.local,local.,svc,163.162.196.17,100.64.0.0/10,172.18.0.0/16`
 `kpt fn eval -i gcr.io/kpt-fn/apply-setters:v0.1.1 -- clusterName=regional httpProxy=${http_proxy} httpsProxy=${https_proxy} noProxy=${capd_no_proxy} sylvaCoreBranch="fc/fix-capd"`
+
+# Note
+Take a look at injectors inside the nephio-workload-cluster package.
+The PackageVariants with injectors are:
+- pv-cluster.yaml
+- pv-repo.yaml
+- pv-rootsync.yaml
+- pv-vlanindex.yaml
+
+# Workarounds
+Metallb in L2 mode doesn't work with calico, the workaround is:
+```bash
+docker run -d --rm --network kind --ip 172.18.0.200 --name kubectl -v /home/tilab/.kube/proxy.yaml:/.kube/config bitnami/kubectl:latest port-forward svc/gitea -n gitea 3000:3000 --address 172.18.0.200
+```
