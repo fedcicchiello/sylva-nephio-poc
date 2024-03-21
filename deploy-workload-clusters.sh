@@ -2,9 +2,9 @@
 
 set -ex
 
-export HTTP_PROXY="http://163.162.95.56:3128"
-export HTTPS_PROXY="http://163.162.95.56:3128"
-export NO_PROXY="tim.local,sylva,127.0.0.1,localhost,cattle-system.svc,192.168.0.0/16,10.0.0.0/8,163.162.0.0/16,tim.it,telecomitalia.it,cluster.local,local.,svc,163.162.196.17,100.64.0.0/10,172.18.0.0/16"
+export HTTP_PROXY=""
+export HTTPS_PROXY=""
+export NO_PROXY="" # e.g. "sylva,127.0.0.1,localhost,cattle-system.svc,192.168.0.0/16,10.0.0.0/8,163.162.0.0/16,cluster.local,local.,svc,100.64.0.0/10,172.18.0.0/16"
 export SYLVA_CORE_BRANCH="fc/fix-capd"
 
 SYLVA_WKLD_CLUSTER_PKG="https://github.com/fedcicchiello/sylva-kpt-packages.git/sylva-workload-cluster@v0.0.2"

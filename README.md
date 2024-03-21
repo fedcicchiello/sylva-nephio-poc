@@ -151,5 +151,7 @@ If you use CAPD with calico as CNI, you can't use Metallb in L2 mode since the b
 
 To work around that you can run a container on the kind network with the same IP as the `cluster_virtual_ip` and `kubectl port-forward` the gitea Service:
 ```bash
-docker run -d --rm --network kind --ip 172.18.0.200 --name kubectl -v /home/tilab/.kube/proxy.yaml:/.kube/config bitnami/kubectl:latest port-forward svc/gitea -n gitea 3000:3000 --address 172.18.0.200
+cp $HOME/.kube/management.yaml $HOME/.kube/proxy.yaml
+sudo chmod 644 $HOME/.kube/proxy.yaml
+docker run -d --rm --network kind --ip 172.18.0.200 --name kubectl -v $HOME/.kube/proxy.yaml:/.kube/config bitnami/kubectl:latest port-forward svc/gitea -n gitea 3000:3000 --address 172.18.0.200
 ```
