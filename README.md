@@ -86,8 +86,6 @@ units:
     enabled: false
   synchronize-secrets:
     enabled: false
-  flux-webui:
-    enabled: false
 
 cluster:
   k8s_version: v1.27.3
