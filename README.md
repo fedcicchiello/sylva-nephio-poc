@@ -125,6 +125,10 @@ Then install the Nephio management components with:
 ## Step 2: Workload clusters deployment
 Make sure to have the management cluster kubeconfig at the path `$HOME/.kube/management.yaml`.
 Ensure to configure your proxy configuration in `deploy-workload-clusters.sh`.
+Ensure that the management cluster kubeconfig doesn't target by default the `sylva-system` Namespace (some workload clusters resources need to be applied on the `default` Namespace):
+```bash
+sed -i '/namespace: sylva-system/d' "${HOME}/.kube/management.yaml"
+```
 Then deploy the three workload clusters (a regional and two edge sites) with:
 ```bash
 ./deploy-workload-clusters.sh
